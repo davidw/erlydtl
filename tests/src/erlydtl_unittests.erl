@@ -80,6 +80,14 @@ tests() ->
                     <<"{{ person.city.state.country }}">>, [{person, [{city, [{state, [{country, "Italy"}]}]}]}],
                     <<"Italy">>}
             ]},
+
+         {"verbatim", [
+		       {"renders text in between tags verbatim, including {{ }}",
+			<<"{% verbatim %} hello {{ blargh }} world {% endverbatim %}">>, [], <<" hello {{ blargh }} world ">>},
+		       {"renders text in between tags verbatim, including unbalanced {{ ",
+			<<"{% verbatim %} hello {{ blargh world {% endverbatim %}">>, [], <<" hello {{ blargh world ">>}
+		      ]},
+
         {"now", [
                {"now functional",
                   <<"It is the {% now \"jS o\\f F Y\" %}.">>, [{var1, ""}], generate_test_date()}

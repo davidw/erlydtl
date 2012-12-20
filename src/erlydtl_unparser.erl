@@ -112,6 +112,10 @@ unparse([{'trans', Value}|Rest], Acc) ->
     unparse(Rest, [["{% trans ", unparse_value(Value), " %}"]|Acc]);
 unparse([{'widthratio', Numerator, Denominator, Scale}|Rest], Acc) ->
     unparse(Rest, [["{% widthratio ", unparse_value(Numerator), " ", unparse_value(Denominator), " ", unparse_value(Scale), " %}"]|Acc]);
+
+unparse([{'verbatim', Contents}|Rest], Acc) ->
+    unparse(Rest, [["{% verbatim %}", unparse(Contents), "{% endverbatim %}"]|Acc]);
+
 unparse([{'with', Args, Contents}|Rest], Acc) ->
     unparse(Rest, [["{% with ", unparse_args(Args), " %}",
                 unparse(Contents),
