@@ -96,8 +96,6 @@ scan([], Scanned, _, in_text) ->
                             
                             "templatetag", "openblock", "closeblock", "openvariable", "closevariable", "openbrace", "closebrace", "opencomment", "closecomment",
 
-			    "verbatim", "endverbatim",
-
                             % "url", - implemented as custom tag
 
                             "widthratio",
@@ -161,11 +159,8 @@ scan("\n" ++ T, Scanned, {Row, Column}, in_text) ->
 scan([H | T], Scanned, {Row, Column}, in_text) ->
     scan(T, append_text_char(Scanned, {Row, Column}, H), {Row, Column + 1}, in_text);
 
-%%% VERBATIM
-
-scan("verbatim" ++ T, Scanned, {Row, Column}, {in_code, Closer}) ->
-    io:format(" VERBATIM "),
-    scan(T, Scanned, {Row, Column + length("verbatim")}, in_verbatim_tag);
+scan("verbatim" ++ T, Scanned, {Row, Column}, {in_code, _Closer}) ->
+    scan(T, [{verbatim_keyword,{Row,Column}, 'verbatim'} | Scanned], {Row, Column + length("verbatim")}, in_verbatim_tag);
 
 scan(" " ++ T, Scanned, {Row, Column}, in_verbatim_tag) ->
     scan(T, Scanned, {Row, Column + 1}, in_verbatim_tag);
@@ -174,27 +169,19 @@ scan(" " ++ T, Scanned, {Row, Column}, {in_endverbatim_tag, Closer}) ->
     scan(T, Scanned, {Row, Column + 1}, {in_endverbatim_tag, Closer});
 
 scan("%}" ++ T, Scanned, {Row, Column}, in_verbatim_tag) ->
-    io:format(" %}INV_TAG "),
     scan(T, Scanned, {Row, Column + length("%}")}, in_verbatim);
 
 scan("{%" ++ T, Scanned, {Row, Column}, in_verbatim) ->
-    io:format(" {%INV "),
     scan(T, Scanned, {Row, Column + length("{%")}, {in_endverbatim_tag, "endverbatim"});
 
 scan([H | T], Scanned, {Row, Column}, in_verbatim) ->
-    io:format(" STUFF "),
-%%    scan(T, append_text_char(Scanned, {Row, Column}, H), {Row, Column + 1}, in_verbatim);
-    scan(T, [{string_literal, {Row, Column}, [H]} | Scanned], {Row, Column + 1}, in_verbatim);
+    scan(T, append_literal_char(Scanned, {Row, Column}, H), {Row, Column + 1}, in_verbatim);
 
 scan("endverbatim" ++ T, Scanned, {Row, Column}, {in_endverbatim_tag, "endverbatim"}) ->
-    io:format(" ENDVERBATIM "),
     scan(T, Scanned, {Row, Column + length("endverbatim")}, {in_endverbatim_tag, "%}"});
 
 scan("%}" ++ T, Scanned, {Row, Column}, {in_endverbatim_tag, "%}"}) ->
-    io:format(" ENDV %} "),
     scan(T, [{close_tag, {Row, Column}, '%}'} | Scanned], {Row, Column + length("%}")}, in_text);
-
-%% VERBATIM
 
 scan("\"" ++ T, Scanned, {Row, Column}, {in_code, Closer}) ->
     scan(T, [{string_literal, {Row, Column}, "\""} | Scanned], {Row, Column + 1}, {in_double_quote, Closer});
@@ -337,6 +324,13 @@ append_text_char([{string, StrPos, Chars} |Scanned1], _, Char) ->
     [{string, StrPos, [Char | Chars]} | Scanned1];
 append_text_char(Scanned, {Row, Column}, Char) ->
     [{string, {Row, Column}, [Char]} | Scanned].
+
+append_literal_char([], {Row, Column}, Char) ->
+    [{string_literal, {Row, Column}, [Char]}];
+append_literal_char([{string_literal, StrPos, Chars} |Scanned1], _, Char) ->
+    [{string_literal, StrPos, [Char | Chars]} | Scanned1];
+append_literal_char(Scanned, {Row, Column}, Char) ->
+    [{string_literal, {Row, Column}, [Char]} | Scanned].
 
 char_type(C) when ((C >= $a) andalso (C =< $z)) orelse ((C >= $A) andalso (C =< $Z)) orelse (C == $_) ->
     letter_underscore;

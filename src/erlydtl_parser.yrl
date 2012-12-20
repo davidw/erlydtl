@@ -117,8 +117,6 @@ Nonterminals
     Templatetag
 
     VerbatimBlock
-    VerbatimBraced
-    EndVerbatimBraced
 
     WidthRatioTag
 
@@ -158,7 +156,6 @@ Terminals
     endifnotequal_keyword
     endregroup_keyword
     endspaceless_keyword
-    endverbatim_keyword
     endwith_keyword
     extends_keyword
     filter_keyword
@@ -379,9 +376,7 @@ TransTag -> open_tag trans_keyword Variable close_tag : {trans, '$3'}.
 TransTag -> open_tag trans_keyword string_literal noop_keyword close_tag : '$3'.
 TransTag -> open_tag trans_keyword Variable noop_keyword close_tag : '$3'.
 
-VerbatimBlock -> VerbatimBraced Elements EndVerbatimBraced : {verbatim, '$2'}.
-VerbatimBraced -> open_tag verbatim_keyword close_tag.
-EndVerbatimBraced -> open_tag endverbatim_keyword close_tag.
+VerbatimBlock -> open_tag verbatim_keyword string_literal close_tag : {verbatim, '$3'}.
 
 WidthRatioTag -> open_tag widthratio_keyword Value Value number_literal close_tag : {widthratio, '$3', '$4', '$5'}.
 
