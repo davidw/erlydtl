@@ -159,6 +159,41 @@ scan("\n" ++ T, Scanned, {Row, Column}, in_text) ->
 scan([H | T], Scanned, {Row, Column}, in_text) ->
     scan(T, append_text_char(Scanned, {Row, Column}, H), {Row, Column + 1}, in_text);
 
+%%% VERBATIM
+
+scan("verbatim" ++ T, Scanned, {Row, Column}, {in_code, Closer}) ->
+    io:format(" VERBATIM "),
+    scan(T, Scanned, {Row, Column + length("verbatim")}, in_verbatim_tag);
+
+scan(" " ++ T, Scanned, {Row, Column}, in_verbatim_tag) ->
+    scan(T, Scanned, {Row, Column + 1}, in_verbatim_tag);
+
+scan(" " ++ T, Scanned, {Row, Column}, {in_endverbatim_tag, Closer}) ->
+    scan(T, Scanned, {Row, Column + 1}, {in_endverbatim_tag, Closer});
+
+scan("%}" ++ T, Scanned, {Row, Column}, in_verbatim_tag) ->
+    io:format(" %}INV_TAG "),
+    scan(T, Scanned, {Row, Column + length("%}")}, in_verbatim);
+
+scan("{%" ++ T, Scanned, {Row, Column}, in_verbatim) ->
+    io:format(" {%INV "),
+    scan(T, Scanned, {Row, Column + length("{%")}, {in_endverbatim_tag, "endverbatim"});
+
+scan([H | T], Scanned, {Row, Column}, in_verbatim) ->
+    io:format(" STUFF "),
+%%    scan(T, append_text_char(Scanned, {Row, Column}, H), {Row, Column + 1}, in_verbatim);
+    scan(T, [{string_literal, {Row, Column}, [H]} | Scanned], {Row, Column + 1}, in_verbatim);
+
+scan("endverbatim" ++ T, Scanned, {Row, Column}, {in_endverbatim_tag, "endverbatim"}) ->
+    io:format(" ENDVERBATIM "),
+    scan(T, Scanned, {Row, Column + length("endverbatim")}, {in_endverbatim_tag, "%}"});
+
+scan("%}" ++ T, Scanned, {Row, Column}, {in_endverbatim_tag, "%}"}) ->
+    io:format(" ENDV %} "),
+    scan(T, [{close_tag, {Row, Column}, '%}'} | Scanned], {Row, Column + length("%}")}, in_text);
+
+%% VERBATIM
+
 scan("\"" ++ T, Scanned, {Row, Column}, {in_code, Closer}) ->
     scan(T, [{string_literal, {Row, Column}, "\""} | Scanned], {Row, Column + 1}, {in_double_quote, Closer});
 
@@ -262,6 +297,7 @@ scan(" " ++ T, Scanned, {Row, Column}, {_, Closer}) ->
 scan([H | T], Scanned, {Row, Column}, {in_code, Closer}) ->
     case char_type(H) of
         letter_underscore ->
+%%	    io:format("~c", [H]),
             scan(T, [{identifier, {Row, Column}, [H]} | Scanned], {Row, Column + 1}, {in_identifier, Closer});
         digit ->
             scan(T, [{number_literal, {Row, Column}, [H]} | Scanned], {Row, Column + 1}, {in_number, Closer});
@@ -280,6 +316,7 @@ scan([H | T], Scanned, {Row, Column}, {in_number, Closer}) ->
 scan([H | T], Scanned, {Row, Column}, {in_identifier, Closer}) ->
     case char_type(H) of
         letter_underscore ->
+%%	    io:format("~c", [H]),
             scan(T, append_char(Scanned, H), {Row, Column + 1}, {in_identifier, Closer});
         digit ->
             scan(T, append_char(Scanned, H), {Row, Column + 1}, {in_identifier, Closer});
