@@ -642,6 +642,9 @@ body_ast(DjangoParseTree, Context, TreeWalker) ->
                 templatetag_ast(TagName, Context, TreeWalkerAcc);
             ({'trans', Value}, TreeWalkerAcc) ->
                 translated_ast(Value, Context, TreeWalkerAcc);
+            ({'verbatim', Contents}, TreeWalkerAcc) ->
+		SourceText = lists:flatten(erlydtl_unparser:unparse(Contents)),
+		string_ast(SourceText, Context, TreeWalkerAcc);
             ({'widthratio', Numerator, Denominator, Scale}, TreeWalkerAcc) ->
                 widthratio_ast(Numerator, Denominator, Scale, Context, TreeWalkerAcc);
             ({'with', Args, Contents}, TreeWalkerAcc) ->
