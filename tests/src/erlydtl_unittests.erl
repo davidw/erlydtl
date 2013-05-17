@@ -1087,6 +1087,8 @@ tests() ->
                 <<"{% with a=b %}{{ a }}{% endwith %}">>, [{b, "foo"}], <<"foo">>},
 	      {"Cache variable with attribute",
                     <<"I enjoy {% with a = var1 %}{{ a.game }}{% endwith %}">>, [{var1, [{game, "Othello"}]}], <<"I enjoy Othello">>},
+	      {"Cache list with attribute",
+                    <<"I enjoy {% with a = var1 | first %}{{ a.game }}{% endwith %}">>, [{var1, [{game, "Chess"}, {game, "Othello"}]}], <<"I enjoy Chess">>},
 	      {"Cache variable attribute",
                     <<"I enjoy {% with a = var1.game %}{{ a }}{% endwith %}">>, [{var1, [{game, "Othello"}]}], <<"I enjoy Othello">>},
             {"Cache multiple",
